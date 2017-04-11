@@ -39,7 +39,6 @@ def replaceSlash(pattern, allText):
 
 def uglifyJava(filename):
     f = open(filename, "r")
-    fn = open(filename + "a", "w+")
     try:
         allText = f.read()
         #去除注释块
@@ -61,16 +60,19 @@ def uglifyJava(filename):
         allText = re.sub(r'\/\/', " ", allText)
         #还原引号中的//
         allText = re.sub(r'\/\*', "//", allText)
-        fn.write(allText)
+        # f.write(allText)
     finally:
         f.close()
-        fn.close()
-    pass
+
+    return allText
 
 startTime = time.time()
 src = "/Users/tzduan/WorkSpace/Other/python/uglify-java/src/test"
 files = getFileTraceByDir(src)
 for fileName in files:
-    uglifyJava(fileName)
+    text = uglifyJava(fileName)
+    f = open(fileName, "w")
+    f.write(text)
+    f.close()
 totalTime = "丑化用时：" + str(time.time()-startTime)
 print(totalTime)
