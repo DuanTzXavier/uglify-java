@@ -1,58 +1,76 @@
 #coding=utf-8
 import re
 import time
+import os
 
-def protectString(matched,p,t):
+def getFileTraceByDir(fileDir):
+    fileDirs = []
+    for root,dirs,files in os.walk(fileDir):
+        fileDirs.extend(getFileTraceByRoot(files, root))
+    return fileDirs
+
+def getFileTraceByRoot(fileNames, root):
+    fileDirs = []
+    for name in fileNames:
+        fileDirs.append(root + "/" + name)
+    return fileDirs
+
+def protectString(matched, p, t, text):
     quotesText = matched
     matched = re.sub(p, t, matched)
     print(matched)
     print(quotesText)
-    return all_the_text.replace("\""+ quotesText + "\"", "\""+ matched + "\"")
+    return text.replace("\""+ quotesText + "\"", "\""+ matched + "\"")
 
-f = open("2.java", "r")
-newFile = open("1-min.java", "w+")
-time1 = time.time()
-try:
-    all_the_text = f.read()
-    #去除注释块
-    all_the_text = re.sub(r'\/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/', "", all_the_text)
-
-    #替换引号中的注释
-
-    pattern=re.compile(r'"(.*?)"')
-    allMatched = re.findall(pattern, all_the_text)
+def replaceSlash(pattern, allText):
+    allMatched = re.findall(pattern, allText)
     if allMatched:
-        pattern=re.compile(r'//')
-        for matched in allMatched:
-            all_the_text = protectString(matched, pattern, "/*")
-            pass
+            #替换引号中的双斜杠
+            pattern2=re.compile(r'//')
+            for matched in allMatched:
+                allText = protectString(matched, pattern2, "/*")
+            #替换引号中的空格
+            pattern=re.compile(r'\s')
+            for matched in allMatched:
+                allText = protectString(matched, pattern, "//")
     else:
-        print 'not search'
+        print '没有找到引号'
+    return allText
 
+def uglifyJava(filename):
+    f = open(filename, "r")
+    fn = open(filename + "a", "w+")
+    try:
+        allText = f.read()
+        #去除注释块
+        allText = re.sub(r'\/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/', "", allText)
+        #替换引号中的//
+        patternQ = re.compile(r'"(.*?)"')
+        patternQ2 = re.compile(r'\'(.*?)\'')
+        allText = replaceSlash(patternQ, allText)
+        allText = replaceSlash(patternQ2, allText)
+        #去除注释行
+        allText = re.sub(r'\/\/[^\n]*', "", allText)
+        #换成单一空格
+        allText = re.sub(r'\s+', " ", allText)
+        #字母间的空格替换
+        allText = re.sub(r'\b\s\b', "//", allText)
+        #去除空格
+        allText = re.sub(r'\s', "", allText)
+        #还原空格
+        allText = re.sub(r'\/\/', " ", allText)
+        #还原引号中的//
+        allText = re.sub(r'\/\*', "//", allText)
+        fn.write(allText)
+    finally:
+        f.close()
+        fn.close()
+    pass
 
-    #去除注释行
-    all_the_text = re.sub(r'\/\/[^\n]*', "", all_the_text)
-
-    if allMatched:
-        pattern=re.compile(r'\s')
-        for matched in allMatched:
-            all_the_text = protectString(matched, pattern, "//")
-            pass
-    else:
-        print 'not search'
-
-    #换成单一空格
-    all_the_text = re.sub(r'\s+', " ", all_the_text)
-    #字母间的空格替换
-    all_the_text = re.sub(r'\b\s\b', "//", all_the_text)
-    #去除空格
-    all_the_text = re.sub(r'\s', "", all_the_text)
-    #还原空格
-    all_the_text = re.sub(r'\/\/', " ", all_the_text)
-    #还原引号中的//
-    all_the_text = re.sub(r'\/\*', "//", all_the_text)
-    newFile.write(all_the_text)
-finally:
-    newFile.close()
-    f.close()
-print(time.time()-time1)
+startTime = time.time()
+src = "/Users/tzduan/WorkSpace/Other/python/uglify-java/src/test"
+files = getFileTraceByDir(src)
+for fileName in files:
+    uglifyJava(fileName)
+totalTime = "丑化用时：" + str(time.time()-startTime)
+print(totalTime)
