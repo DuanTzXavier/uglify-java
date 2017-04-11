@@ -1,13 +1,18 @@
 #coding=utf-8
 import os
 
-def fileName(fileDir):
+def getFileTraceByDir(fileDir):
+    fileDirs = []
     for root,dirs,files in os.walk(fileDir):
-        print("root: " + root)
-        print("dirs: ")
-        print(dirs)
-        print("files: ")
-        print(files)
+        fileDirs.extend(getFileTraceByRoot(files, root))
+    return fileDirs
 
+def getFileTraceByRoot(fileNames, root):
+    fileDirs = []
+    for name in fileNames:
+        fileDirs.append(root + "/" + name)
+    return fileDirs
+    
+files = getFileTraceByDir("/Users/tzduan/AndroidStudioProjects/SuperCalculator/app/src/main/java/")
 
-fileName("/Users/tzduan/WorkSpace/Other/python/uglify-java/src")
+print(files)
